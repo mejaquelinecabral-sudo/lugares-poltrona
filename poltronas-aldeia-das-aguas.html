@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aldeia das Águas — Poltronas</title>
+<style>
+  :root{
+    --bg: #0e2a2e;
+    --bg-soft: #123a3f;
+    --panel: #f3efe4;
+    --ink: #0e2a2e;
+    --ink-soft: #4a615f;
+    --available: #2f8f6f;
+    --available-soft: #e6f3ec;
+    --reserved: #c1553a;
+    --reserved-soft: #fbe9e3;
+    --gold: #d3a24d;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: radial-gradient(circle at 20% 0%, var(--bg-soft), var(--bg) 60%);
+    font-family: "Georgia", "Iowan Old Style", serif;
+    color: var(--panel);
+    min-height:100vh;
+    padding: 32px 16px 60px;
+  }
+  .wrap{ max-width: 980px; margin: 0 auto; }
+  header{ text-align:center; margin-bottom: 28px; }
+  .eyebrow{
+    font-family: "Courier New", monospace;
+    letter-spacing: 3px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  h1{
+    font-size: clamp(28px, 4vw, 42px);
+    margin: 0 0 6px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+  }
+  .sub{ color: #b7cbc8; font-size: 14px; font-family: "Courier New", monospace; }
+
+  .status-bar{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 22px 0 30px;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    color: #b7cbc8;
+  }
+  .legend{ display:flex; gap:16px; align-items:center; }
+  .legend span{ display:flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot.a{ background: var(--available); }
+  .dot.r{ background: var(--reserved); }
+  #refreshBtn{
+    background: transparent;
+    border: 1px solid #3f5b57;
+    color: var(--panel);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  #refreshBtn:hover{ border-color: var(--gold); color: var(--gold); }
+  #refreshBtn:disabled{ opacity:.5; cursor:default; }
+
+  .count-strip{
+    display:flex;
+    justify-content:center;
+    gap: 40px;
+    margin-bottom: 34px;
+    font-family: "Courier New", monospace;
+  }
+  .count-strip div{ text-align:center; }
+  .count-strip .num{ font-size: 30px; color: var(--gold); font-family: Georgia, serif; }
+  .count-strip .label{ font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #b7cbc8; }
+
+  .grid{
+    background: var(--panel);
+    border-radius: 4px;
+    padding: 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  .seat{
+    aspect-ratio: 1/1;
+    border-radius: 6px;
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content:center;
+    padding: 4px;
+    text-align:center;
+    position: relative;
+    cursor: default;
+  }
+  .seat .n{
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    font-size: 15px;
+    color: var(--ink);
+    opacity: .55;
+  }
+  .seat .name{
+    font-size: 10.5px;
+    line-height: 1.15;
+    margin-top: 3px;
+    color: var(--ink);
+    word-break: break-word;
+    max-width: 90%;
+  }
+  .seat.available{ background: var(--available-soft); border: 1px solid var(--available); }
+  .seat.reserved{ background: var(--reserved-soft); border: 1px solid var(--reserved); }
+  .seat.reserved .n{ color: var(--reserved); opacity: 1; }
+  .seat.available .n{ color: var(--available); opacity: 1; }
+
+  footer{
+    text-align:center;
+    margin-top: 26px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    color: #7f9995;
+  }
+  .msg{
+    text-align:center;
+    font-family:"Courier New", monospace;
+    font-size: 13px;
+    color: var(--gold);
+    padding: 40px;
+  }
+  .error-box{
+    background: var(--panel);
+    border-radius: 4px;
+    padding: 28px;
+    color: var(--ink);
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .error-box h3{ margin-top:0; font-family: Georgia, serif; color: var(--reserved); }
+  .error-box code{ background:#eee; padding:2px 6px; border-radius:3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Controle de Reservas</div>
+    <h1>Aldeia das Águas</h1>
+    <div class="sub">46 poltronas · aba "Lugares"</div>
+  </header>
+
+  <div class="status-bar">
+    <div class="legend">
+      <span><span class="dot a"></span>Disponível</span>
+      <span><span class="dot r"></span>Reservada</span>
+    </div>
+    <button id="refreshBtn">↻ atualizar agora</button>
+    <span id="lastUpdated">—</span>
+  </div>
+
+  <div class="count-strip">
+    <div><div class="num" id="countAvailable">–</div><div class="label">Livres</div></div>
+    <div><div class="num" id="countReserved">–</div><div class="label">Reservadas</div></div>
+    <div><div class="num" id="countTotal">46</div><div class="label">Total</div></div>
+  </div>
+
+  <div id="content">
+    <div class="msg">Carregando dados da planilha…</div>
+  </div>
+
+  <footer>Sincronizado automaticamente com a planilha do Google Sheets · atualiza a cada 30s</footer>
+</div>
+
+<script>
+const SHEET_ID = "1cHuv0Oc0uk79bsKk1vedkW4YoOBO1zlsZMUIUMVkRWE";
+const SHEET_NAME = "Lugares";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+function parseCSV(text) {
+  // Simple CSV parser handling quoted fields
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function extractSeats(rows) {
+  // Scan every row for number/name pairs in columns (F,G) (H,I) (J,K) -> indices (5,6)(7,8)(9,10)
+  const pairs = [[5,6],[7,8],[9,10]];
+  const seats = {};
+  for (const row of rows) {
+    for (const [ni, nmi] of pairs) {
+      const raw = (row[ni] || '').trim();
+      if (raw && /^\d+$/.test(raw)) {
+        const seatNum = parseInt(raw, 10);
+        if (seatNum >= 1 && seatNum <= 46) {
+          const name = (row[nmi] || '').trim();
+          seats[seatNum] = name;
+        }
+      }
+    }
+  }
+  return seats;
+}
+
+function render(seats) {
+  const content = document.getElementById('content');
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+
+  let available = 0, reserved = 0;
+
+  for (let i = 1; i <= 46; i++) {
+    const name = seats[i] !== undefined ? seats[i] : '';
+    const isReserved = name.length > 0;
+    if (isReserved) reserved++; else available++;
+
+    const seatEl = document.createElement('div');
+    seatEl.className = 'seat ' + (isReserved ? 'reserved' : 'available');
+
+    const isGeneric = name.toLowerCase() === 'reservada';
+    seatEl.innerHTML = `
+      <div class="n">${i}</div>
+      ${isReserved && !isGeneric ? `<div class="name">${escapeHtml(name)}</div>` : ''}
+    `;
+    grid.appendChild(seatEl);
+  }
+
+  content.innerHTML = '';
+  content.appendChild(grid);
+  document.getElementById('countAvailable').textContent = available;
+  document.getElementById('countReserved').textContent = reserved;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '↻ atualizando…';
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    const seats = extractSeats(rows);
+    render(seats);
+    document.getElementById('lastUpdated').textContent =
+      'atualizado às ' + new Date().toLocaleTimeString('pt-BR');
+  } catch (err) {
+    document.getElementById('content').innerHTML = `
+      <div class="error-box">
+        <h3>Não foi possível carregar a planilha</h3>
+        <p>Isso costuma acontecer quando a planilha ainda não está compartilhada como <strong>"Qualquer pessoa com o link pode visualizar"</strong>.</p>
+        <p>Para corrigir: abra a planilha → botão <code>Compartilhar</code> → em "Acesso geral" selecione <code>Qualquer pessoa com o link</code> → função <code>Leitor</code>.</p>
+        <p>Erro técnico: ${escapeHtml(err.message)}</p>
+      </div>
+    `;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ atualizar agora';
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+loadData();
+setInterval(loadData, 30000);
+</script>
+</body>
+</html>
